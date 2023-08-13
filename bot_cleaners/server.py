@@ -60,7 +60,7 @@ model_params = {
         "Posición Inicial de los Robots",
         "Aleatoria",
         ["Fija", "Aleatoria"],
-        "Seleciona la forma se posicionan los robots"
+        "Selecciona la forma se posicionan los robots"
     ),
     "M": 20,
     "N": 20,
