@@ -1,3 +1,5 @@
+import random
+
 import mesa
 
 from .model import Habitacion, RobotLimpieza, Celda, Mueble
@@ -7,16 +9,16 @@ MAX_NUMBER_ROBOTS = 20
 
 def agent_portrayal(agent):
     if isinstance(agent, RobotLimpieza):
-        return {"Shape": "circle", "Filled": "false", "Color": "Cyan", "Layer": 1, "r": 0.9,
-                "text": f"{agent.carga}", "text_color": "black"}
+        return {"Shape": "circle", "Filled": "false", "Color": "black", "Layer": 1, "r": 1.0,
+                "text": f"{agent.carga}", "text_color": "yellow"}
     elif isinstance(agent, Mueble):
-        return {"Shape": "rect", "Filled": "true", "Color": "black", "Layer": 0,
-                "w": 0.9, "h": 0.9}
+        return {"Shape": "rect", "Filled": "true", "Color": "white", "Layer": 0,
+                "w": 0.9, "h": 0.9, "text_color": "Black", "text": "🪑"}
     elif isinstance(agent, Celda):
         portrayal = {"Shape": "rect", "Filled": "true", "Layer": 0, "w": 0.9, "h": 0.9, "text_color": "Black"}
         if agent.sucia:
-            portrayal["Color"] = "#ccbeaf"
-            portrayal["text"] = "💩"
+            portrayal["Color"] = "white"
+            portrayal["text"] = "🦠"
         else:
             portrayal["Color"] = "white"
             portrayal["text"] = ""
