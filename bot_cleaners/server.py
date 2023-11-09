@@ -13,7 +13,7 @@ def agent_portrayal(agent):
                 "text": f"{agent.carga}", "text_color": "yellow"}
     elif isinstance(agent, Mueble):
         return {"Shape": "rect", "Filled": "true", "Color": "white", "Layer": 0,
-                "w": 0.9, "h": 0.9, "text_color": "Black", "text": "🪑"}
+                "w": 0.9, "h": 0.9, "text_color": "Black", "text": "💩"}
     elif isinstance(agent, Celda):
         portrayal = {"Shape": "rect", "Filled": "true", "Layer": 0, "w": 0.9, "h": 0.9, "text_color": "Black"}
         if agent.sucia:
