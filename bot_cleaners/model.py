@@ -19,8 +19,16 @@ class Mueble(Agent):
 
 
 class CargadorRobot(Agent):
+
+
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
+
+    def cargar_robot(self, robot, velocidad_carga=20):
+        # Incrementar la batería del robot
+        if robot.carga < 100:
+            robot.carga += velocidad_carga
+            robot.carga = min(robot.carga, 100)
 
 
 class RobotLimpieza(Agent):
@@ -29,6 +37,7 @@ class RobotLimpieza(Agent):
         self.sig_pos = None
         self.movimientos = 0
         self.carga = 100
+        self.buscar_cargador = 30
 
     def limpiar_una_celda(self, lista_de_celdas_sucias):
         celda_a_limpiar = self.random.choice(lista_de_celdas_sucias)
@@ -50,6 +59,38 @@ class RobotLimpieza(Agent):
                 celdas_sucias.append(vecino)
         return celdas_sucias
 
+    def mover_hacia_cargador(self):
+        cargador_mas_cercano = self.encontrar_cargador_mas_cercano()
+        self.mover_un_paso_hacia(cargador_mas_cercano)
+
+    def encontrar_cargador_mas_cercano(self):
+        # Identificar la ubicación de todas las estaciones de carga
+        posiciones_cargadores = [cargador.pos for cargador in self.model.schedule.agents
+                                 if isinstance(cargador, CargadorRobot)]
+
+        # Encontrar el cargador más cercano
+        cargador_mas_cercano = min(posiciones_cargadores,
+                                   key=lambda pos: self.distancia(self.pos, pos))
+        return cargador_mas_cercano
+
+    def mover_un_paso_hacia(self, destino):
+        # Determinar en qué dirección moverse
+        dx = destino[0] - self.pos[0]
+        dy = destino[1] - self.pos[1]
+
+        if abs(dx) > abs(dy):  # Moverse en el eje X
+            self.sig_pos = (self.pos[0] + (1 if dx > 0 else -1), self.pos[1])
+        else:  # Moverse en el eje Y
+            self.sig_pos = (self.pos[0], self.pos[1] + (1 if dy > 0 else -1))
+
+        # Actualizar la posición del robot
+        self.model.grid.move_agent(self, self.sig_pos)
+        self.movimientos += 1
+
+    def distancia(self, pos1, pos2):
+        # Calcular la distancia de Manhattan
+        return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
+
     def step(self):
         vecinos = self.model.grid.get_neighbors(
             self.pos, moore=True, include_center=False)
@@ -60,10 +101,15 @@ class RobotLimpieza(Agent):
 
         celdas_sucias = self.buscar_celdas_sucia(vecinos)
 
-        if len(celdas_sucias) == 0:
+        if self.carga < self.buscar_cargador:
+            self.mover_hacia_cargador()
+            
+        elif len(celdas_sucias) == 0:
             self.seleccionar_nueva_pos(vecinos)
         else:
             self.limpiar_una_celda(celdas_sucias)
+
+        self.carga -= 1
 
     def advance(self):
         if self.pos != self.sig_pos:
@@ -173,7 +219,7 @@ def get_grid(model: Model) -> np.ndarray:
 
 
 def get_cargas(model: Model):
-    return [(agent.unique_id, agent.carga) for agent in model.schedule.agents]
+    return [(agent.unique_id, agent.carga) for agent in model.schedule.agents if isinstance(agent, RobotLimpieza)]
 
 
 def get_sucias(model: Model) -> int:
@@ -196,4 +242,3 @@ def get_movimientos(agent: Agent) -> dict:
         return {agent.unique_id: agent.movimientos}
     # else:
     #    return 0
-
