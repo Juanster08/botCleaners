@@ -17,10 +17,10 @@ class Mueble(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
 
+
 class CargadorRobot(Agent):
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
-        self.cargador =  cargando
 
 
 class RobotLimpieza(Agent):
@@ -80,16 +80,29 @@ class Habitacion(Model):
                  porc_celdas_sucias: float = 0.6,
                  porc_muebles: float = 0.1,
                  modo_pos_inicial: str = 'Fija',
+                 num_cargadores: int = 4,
                  ):
-
+        self.unique_id_counter = 0
         self.num_agentes = num_agentes
         self.porc_celdas_sucias = porc_celdas_sucias
         self.porc_muebles = porc_muebles
+        self.num_cargadores = num_cargadores
 
         self.grid = MultiGrid(M, N, False)
         self.schedule = SimultaneousActivation(self)
 
         posiciones_disponibles = [pos for _, pos in self.grid.coord_iter()]
+
+        # Posicionamiento Cargadores
+        num_cargadores = int(num_cargadores)
+        posiciones_cargadores = self.random.sample(posiciones_disponibles, k=num_cargadores)
+
+        for id in range(num_cargadores):
+            # Usar el mismo contador de IDs únicos para los cargadores
+            cargador = CargadorRobot(self.unique_id_counter, self)
+            self.unique_id_counter += 1  # Incrementar el contador
+            self.grid.place_agent(cargador, posiciones_cargadores[id])
+            self.schedule.add(cargador)
 
         # Posicionamiento de muebles
         num_muebles = int(M * N * porc_muebles)
@@ -117,7 +130,9 @@ class Habitacion(Model):
             pos_inicial_robots = [(1, 1)] * num_agentes
 
         for id in range(num_agentes):
-            robot = RobotLimpieza(id, self)
+            # Usar el contador de IDs únicos
+            robot = RobotLimpieza(self.unique_id_counter, self)
+            self.unique_id_counter += 1  # Incrementar el contador
             self.grid.place_agent(robot, pos_inicial_robots[id])
             self.schedule.add(robot)
 
@@ -181,3 +196,4 @@ def get_movimientos(agent: Agent) -> dict:
         return {agent.unique_id: agent.movimientos}
     # else:
     #    return 0
+

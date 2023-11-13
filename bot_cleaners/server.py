@@ -2,9 +2,10 @@ import random
 
 import mesa
 
-from .model import Habitacion, RobotLimpieza, Celda, Mueble
+from .model import Habitacion, RobotLimpieza, Celda, Mueble, CargadorRobot
 
 MAX_NUMBER_ROBOTS = 20
+MAX_NUMBER_CARGADORES = 4
 
 
 def agent_portrayal(agent):
@@ -14,6 +15,9 @@ def agent_portrayal(agent):
     elif isinstance(agent, Mueble):
         return {"Shape": "rect", "Filled": "true", "Color": "white", "Layer": 0,
                 "w": 0.9, "h": 0.9, "text_color": "Black", "text": "💩"}
+    elif isinstance(agent, CargadorRobot):
+        return {"Shape": "rect", "Filled": "true", "Color": "white", "Layer": 0,
+                "w": 0.9, "h": 0.9, "text_color": "Black", "text": "🔋"}
     elif isinstance(agent, Celda):
         portrayal = {"Shape": "rect", "Filled": "true", "Layer": 0, "w": 0.9, "h": 0.9, "text_color": "Black"}
         if agent.sucia:
@@ -49,6 +53,13 @@ model_params = {
         0.75,
         0.05,
         description="Selecciona el porcentaje de celdas sucias",
+    ),
+    "num_cargadores": mesa.visualization.Slider(
+        "Numero de Cargadores",
+        4,
+        1,
+        4,
+        description="Selecciona la cantidad de cargadores que habran en el modelo",
     ),
     "porc_muebles": mesa.visualization.Slider(
         "Porcentaje de Muebles",
