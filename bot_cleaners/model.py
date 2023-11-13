@@ -20,15 +20,17 @@ class Mueble(Agent):
 
 class CargadorRobot(Agent):
 
-
     def __init__(self, unique_id, model):
         super().__init__(unique_id, model)
+        self.velocidad_carga = 99
+        self.ocupado = False
 
-    def cargar_robot(self, robot, velocidad_carga=20):
-        # Incrementar la batería del robot
-        if robot.carga < 100:
-            robot.carga += velocidad_carga
+    def cargar_robot(self, robot):
+        if not self.ocupado and robot.carga < 100:
+            self.ocupado = True
+            robot.carga += self.velocidad_carga
             robot.carga = min(robot.carga, 100)
+            
 
 
 class RobotLimpieza(Agent):
@@ -74,18 +76,22 @@ class RobotLimpieza(Agent):
         return cargador_mas_cercano
 
     def mover_un_paso_hacia(self, destino):
-        # Determinar en qué dirección moverse
         dx = destino[0] - self.pos[0]
         dy = destino[1] - self.pos[1]
 
         if abs(dx) > abs(dy):  # Moverse en el eje X
-            self.sig_pos = (self.pos[0] + (1 if dx > 0 else -1), self.pos[1])
+            nueva_x = self.pos[0] + (1 if dx > 0 else -1)
+            nueva_y = self.pos[1]
         else:  # Moverse en el eje Y
-            self.sig_pos = (self.pos[0], self.pos[1] + (1 if dy > 0 else -1))
+            nueva_x = self.pos[0]
+            nueva_y = self.pos[1] + (1 if dy > 0 else -1)
 
-        # Actualizar la posición del robot
-        self.model.grid.move_agent(self, self.sig_pos)
-        self.movimientos += 1
+        # Verificar si la nueva posición está dentro de los límites
+        if 0 <= nueva_x < self.model.grid.width and 0 <= nueva_y < self.model.grid.height:
+            self.sig_pos = (nueva_x, nueva_y)
+            self.model.grid.move_agent(self, self.sig_pos)
+            self.movimientos += 1
+
 
     def distancia(self, pos1, pos2):
         # Calcular la distancia de Manhattan
@@ -103,14 +109,25 @@ class RobotLimpieza(Agent):
 
         if self.carga < self.buscar_cargador:
             self.mover_hacia_cargador()
+
+            cargador = self.obtener_cargador_en_posicion()
+            if cargador:
+                cargador.cargar_robot(self)
             
         elif len(celdas_sucias) == 0:
             self.seleccionar_nueva_pos(vecinos)
         else:
             self.limpiar_una_celda(celdas_sucias)
 
+
+
         self.carga -= 1
 
+    def obtener_cargador_en_posicion(self):
+        # Buscar un cargador en la misma posición que este robot
+        celda_actual = self.model.grid.get_cell_list_contents([self.pos])
+        cargadores = [obj for obj in celda_actual if isinstance(obj, CargadorRobot)]
+        return cargadores[0] if cargadores else None
     def advance(self):
         if self.pos != self.sig_pos:
             self.movimientos += 1
@@ -139,15 +156,11 @@ class Habitacion(Model):
 
         posiciones_disponibles = [pos for _, pos in self.grid.coord_iter()]
 
-        # Posicionamiento Cargadores
-        num_cargadores = int(num_cargadores)
-        posiciones_cargadores = self.random.sample(posiciones_disponibles, k=num_cargadores)
-
-        for id in range(num_cargadores):
-            # Usar el mismo contador de IDs únicos para los cargadores
+        esquinas = [(0, 0), (0, self.grid.height - 1), (self.grid.width - 1, 0), (self.grid.width - 1, self.grid.height - 1)]
+        for id, posicion in enumerate(esquinas):
             cargador = CargadorRobot(self.unique_id_counter, self)
-            self.unique_id_counter += 1  # Incrementar el contador
-            self.grid.place_agent(cargador, posiciones_cargadores[id])
+            self.unique_id_counter += 1
+            self.grid.place_agent(cargador, posicion)
             self.schedule.add(cargador)
 
         # Posicionamiento de muebles

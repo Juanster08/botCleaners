@@ -56,7 +56,7 @@ model_params = {
     "num_cargadores": mesa.visualization.Slider(
         "Numero de Cargadores",
         4,
-        1,
+        4,
         4,
         description="Selecciona la cantidad de cargadores que habran en el modelo",
     ),
