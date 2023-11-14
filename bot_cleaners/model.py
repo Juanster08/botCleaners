@@ -181,8 +181,16 @@ class Habitacion(Model):
 
         posiciones_disponibles = [pos for _, pos in self.grid.coord_iter()]
 
-        esquinas = [(0, 0), (0, self.grid.height - 1), (self.grid.width - 1, 0), (self.grid.width - 1, self.grid.height - 1)]
-        for id, posicion in enumerate(esquinas):
+        mitad_ancho = self.grid.width // 2
+        mitad_altura = self.grid.height // 2
+        posiciones_cargadores = [
+            (mitad_ancho // 2, mitad_altura // 2),  # Cerca del centro en el cuadrante superior izquierdo
+            (mitad_ancho // 2, 3 * mitad_altura // 2),  # Cerca del centro en el cuadrante inferior izquierdo
+            (3 * mitad_ancho // 2, mitad_altura // 2),  # Cerca del centro en el cuadrante superior derecho
+            (3 * mitad_ancho // 2, 3 * mitad_altura // 2)  # Cerca del centro en el cuadrante inferior derecho
+        ]
+
+        for id, posicion in enumerate(posiciones_cargadores):
             cargador = CargadorRobot(self.unique_id_counter, self)
             self.unique_id_counter += 1
             self.grid.place_agent(cargador, posicion)
